@@ -1,0 +1,18 @@
+{
+  "name": "saving-contract",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "compile": "node deploy.mjs --compile",
+    "deploy": "node --env-file-if-exists=.env deploy.mjs",
+    "benchmark": "node benchmark.mjs"
+  },
+  "dependencies": {
+    "ethers": "^6.15.0",
+    "solc": "0.8.30"
+  },
+  "devDependencies": {
+    "ganache": "^7.9.2"
+  }
+}
