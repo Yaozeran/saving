@@ -1,0 +1,12 @@
+[
+  {
+    "check": "docker-build",
+    "exitCode": 0,
+    "log": "docker-build.log"
+  },
+  {
+    "check": "docker-smoke",
+    "exitCode": 0,
+    "log": "docker-smoke.log"
+  }
+]

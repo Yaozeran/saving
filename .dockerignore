@@ -1,0 +1,15 @@
+**/node_modules
+**/.next
+**/.env
+**/.env.*
+!**/.env.example
+**/data
+**/artifacts
+.git
+.agent
+
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/*.pyc
+deliverables

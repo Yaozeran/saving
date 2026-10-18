@@ -1,0 +1,14 @@
+{
+  "status": "pass",
+  "environment": "Chromium + Python API + isolated Ganache chain, simulated EIP-1193 wallet; not real MetaMask or public Sepolia",
+  "checks": [
+    "customer registration through Next proxy with browser Origin",
+    "simulated wallet challenge signature verified by Python",
+    "deposit: fee preview, local EVM execution, two confirmations and verified journal import",
+    "withdraw: fee preview, local EVM execution, two confirmations and verified journal import",
+    "claim: fee preview, local EVM execution, two confirmations and verified journal import",
+    "chart table, event filter and authenticated CSV",
+    "desktop/mobile rendering; no document-width overflow at 390px",
+    "auditor registration, shared journal, disabled financial controls and audit trail"
+  ]
+}

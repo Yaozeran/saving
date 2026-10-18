@@ -1,0 +1,7 @@
+flowchart LR
+ C[Customer wallet] -->|deposit / withdraw / claim| S[Savings: only implemented contract]
+ O[Immutable owner wallet] -->|fund| S
+ S -->|ETH withdrawal or interest| C
+ S --> E[Four event types]
+ A[API] -->|read state and verify receipts| S
+ E --> A

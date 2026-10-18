@@ -1,0 +1,67 @@
+{
+  "environment": {
+    "compiler": "0.8.30",
+    "evm": "shanghai",
+    "chain": "Ganache in-process, simulated timestamps",
+    "rateBps": 500,
+    "optimizerRuns": 200
+  },
+  "results": [
+    {
+      "optimizer": false,
+      "creationBytecodeBytes": 4812,
+      "deploymentGas": "1017375",
+      "operations": [
+        {
+          "name": "deposit",
+          "estimatedGas": "100864",
+          "actualGas": "95874"
+        },
+        {
+          "name": "fund",
+          "estimatedGas": "22852",
+          "actualGas": "22852"
+        },
+        {
+          "name": "claim",
+          "estimatedGas": "79709",
+          "actualGas": "54920"
+        },
+        {
+          "name": "withdraw",
+          "estimatedGas": "56393",
+          "actualGas": "41904"
+        }
+      ],
+      "principalAfterWithdrawal": "0"
+    },
+    {
+      "optimizer": true,
+      "creationBytecodeBytes": 2366,
+      "deploymentGas": "545131",
+      "operations": [
+        {
+          "name": "deposit",
+          "estimatedGas": "99727",
+          "actualGas": "94735"
+        },
+        {
+          "name": "fund",
+          "estimatedGas": "22724",
+          "actualGas": "22724"
+        },
+        {
+          "name": "claim",
+          "estimatedGas": "78748",
+          "actualGas": "53951"
+        },
+        {
+          "name": "withdraw",
+          "estimatedGas": "55195",
+          "actualGas": "40698"
+        }
+      ],
+      "principalAfterWithdrawal": "0"
+    }
+  ]
+}

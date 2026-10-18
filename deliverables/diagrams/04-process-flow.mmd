@@ -1,0 +1,10 @@
+flowchart LR
+ A[Password sign in] --> B[Issue wallet challenge]
+ B --> C[Sign and verify wallet message]
+ C --> D[Review MetaMask Sepolia deposit]
+ D --> E[Wait for two confirmations]
+ E --> F[API verifies receipt and wallet event]
+ F --> G[Idempotent journal insert]
+ G --> H[Refresh balances]
+ E -->|browser interrupted| I[Import retained hash]
+ I --> F

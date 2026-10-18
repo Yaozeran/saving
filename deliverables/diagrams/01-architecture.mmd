@@ -1,0 +1,7 @@
+flowchart LR
+ B[Browser / Next.js] -->|same origin /api| API[Python FastAPI]
+ API --> DB[(SQLite)]
+ B -->|wallet prompts| M[MetaMask]
+ M -->|signed transaction| RPC[Sepolia RPC]
+ API -->|read balances and verify receipts| RPC
+ RPC --> V[Savings.sol]

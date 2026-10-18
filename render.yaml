@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: saving-sepolia
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    disk:
+      name: saving-data
+      mountPath: /app/data
+      sizeGB: 1
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DB_PATH
+        value: /app/data/saving.sqlite
+      - key: SEPOLIA_RPC_URL
+        sync: false
+      - key: CONTRACT_ADDRESS
+        sync: false
+      - key: ADMIN_REGISTRATION_CODE
+        generateValue: true
+      - key: AUDITOR_REGISTRATION_CODE
+        generateValue: true
