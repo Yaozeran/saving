@@ -28,7 +28,7 @@ test("principal protection, interest accounting, owner funding and reserve exhau
     await (await c.fund({ value: parseEther("0.2") })).wait();
     await (await u.claim({ gasLimit: 300000 })).wait();
     assert.ok((await c.reserve()) < parseEther("0.16"));
-    await (await u.withdraw(parseEther("1"))).wait();
+    await (await u.withdraw(parseEther("1"), { gasLimit: 300000 })).wait();
     assert.equal(await c.totalPrincipal(), 0n);
     assert.equal((await c.accounts(await user.getAddress())).principal, 0n);
     await assert.rejects(u.withdraw(1n));
@@ -55,7 +55,7 @@ test("principal can be withdrawn while reserve is empty, preserving earned inter
     await chain.request({ method: "evm_increaseTime", params: [365 * 86400] });
     await chain.request({ method: "evm_mine", params: [] });
     assert.equal(await vault.reserve(), 0n);
-    await (await vault.withdraw(parseEther("1"))).wait();
+    await (await vault.withdraw(parseEther("1"), { gasLimit: 300000 })).wait();
     assert.equal(await vault.totalPrincipal(), 0n);
     assert.ok(
       (await vault.earned(await signer.getAddress())) >= parseEther("0.05"),

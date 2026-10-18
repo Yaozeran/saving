@@ -21,6 +21,7 @@ from config import Settings
 from database import Database
 from security import now_ms, token_hash, password_hash, verify_password, RateLimiter
 from chain import ChainReader, CHAIN_ID, EVENT_NAMES
+from rpc_errors import rpc_message
 
 log = logging.getLogger("saving.api")
 READERS = ("admin", "auditor")
@@ -53,7 +54,7 @@ def create_app(settings=None, chain=None):
 
     app = FastAPI(
         title="Saving API",
-        version="2.0.0",
+        version="2.1.0",
         lifespan=lifespan,
         docs_url="/api/docs" if not settings.production else None,
         openapi_url="/api/openapi.json" if not settings.production else None,
@@ -82,7 +83,8 @@ def create_app(settings=None, chain=None):
         log.error("Request failed: %s %s", request.url.path, type(exc).__name__)
         return JSONResponse(
             {
-                "error": "Service unavailable. Check RPC configuration or try again later."
+                "error": rpc_message(exc)
+                or "Service unavailable. Check RPC configuration or try again later."
             },
             status_code=503,
         )
@@ -209,7 +211,7 @@ def create_app(settings=None, chain=None):
     def health():
         with app.state.db.connect() as db:
             db.execute("SELECT 1").fetchone()
-        return {"ok": True, "service": "saving-python", "version": "2.0.0"}
+        return {"ok": True, "service": "saving-python", "version": "2.1.0"}
 
     @app.get("/api/config")
     def config():
@@ -443,25 +445,41 @@ def create_app(settings=None, chain=None):
             ]
         return {"items": rows, "total": total, "page": page, "pageSize": 20}
 
+    @app.get("/api/chain-status")
+    def chain_status(user=Depends(current_user)):
+        return app.state.chain.diagnostics()
+
     @app.get("/api/balance")
     def balance(user=Depends(current_user)):
         return app.state.chain.balance(user["wallet"])
 
     @app.post("/api/transactions")
     def import_receipt(body: ReceiptInput, user=Depends(writer)):
-        if not user["wallet"]:
+        if user["role"] != "admin" and not user["wallet"]:
             raise HTTPException(400, "Connect and verify a wallet first.")
-        events = app.state.chain.verify_receipt(body.hash, user["wallet"])
+        # Admins may recover confirmed receipts for already-linked customers.
+        # Ownership always comes from decoded contract events, never request input.
+        events = app.state.chain.verify_receipt(
+            body.hash, None if user["role"] == "admin" else user["wallet"]
+        )
         inserted = 0
         with app.state.db.connect() as db:
+            matched = 0
             for event in events:
+                owner = db.execute(
+                    "SELECT id FROM users WHERE lower(wallet)=lower(?)",
+                    (event["wallet"],),
+                ).fetchone()
+                if not owner or (user["role"] != "admin" and owner["id"] != user["id"]):
+                    continue
+                matched += 1
                 result = db.execute(
                     """INSERT OR IGNORE INTO transactions(hash,log_index,user_id,kind,amount,block,block_hash,block_time)
                                      VALUES(?,?,?,?,?,?,?,?)""",
                     (
                         event["hash"],
                         event["log_index"],
-                        user["id"],
+                        owner["id"],
                         event["kind"],
                         event["amount"],
                         event["block"],
@@ -470,6 +488,11 @@ def create_app(settings=None, chain=None):
                     ),
                 )
                 inserted += result.rowcount
+            if not matched:
+                raise HTTPException(
+                    400,
+                    "No matching registered wallet. The wallet that made the transaction must be linked to a customer account first.",
+                )
             if inserted:
                 Database.audit(db, user["id"], "receipt_imported", body.hash)
         return {"ok": True, "inserted": inserted}

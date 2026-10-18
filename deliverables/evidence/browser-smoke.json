@@ -7,6 +7,8 @@
     "deposit: fee preview, local EVM execution, two confirmations and verified journal import",
     "withdraw: fee preview, local EVM execution, two confirmations and verified journal import",
     "claim: fee preview, local EVM execution, two confirmations and verified journal import",
+    "receipt import survives two backend confirmation conflicts",
+    "reload automatically recovers a missing deposit journal entry from the saved hash",
     "chart table, event filter and authenticated CSV",
     "desktop/mobile rendering; no document-width overflow at 390px",
     "auditor registration, shared journal, disabled financial controls and audit trail"

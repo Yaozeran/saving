@@ -58,3 +58,11 @@ The agreed scope uses the assignment as a flexible guide: see [agreed scope](doc
 See the [deliverable index](deliverables/README.md) for the report, slides, diagrams, manuals, test evidence and demonstration script. Public deployment, actual MetaMask acceptance, authentic GitHub history and a performed demonstration remain external evidence items. Generated screenshots are explicitly labelled local-chain/simulated-wallet tests.
 
 Technical references: [FastAPI testing](https://fastapi.tiangolo.com/tutorial/testing/), [Web3.py contracts](https://web3py.readthedocs.io/en/stable/web3.contract.html), [ethers v6](https://docs.ethers.org/v6/), [Render persistent disks](https://render.com/docs/disks).
+
+## Missing transaction recovery (v2.1)
+
+A successful wallet transaction can exist on Sepolia before the backend RPC sees two confirmations. The browser now retries pending-confirmation imports, saves submitted hashes per contract/wallet in local storage, and attempts recovery on login or Refresh. It never creates confirmed history from a browser-supplied amount. Import feedback appears beside history as well as in the sticky status notice.
+
+To recover an older deposit, paste its transaction hash into the history Import form. Customers can import their own wallet events; admins can import events for any already-linked registered wallet, and ownership is derived from the contract log. Auditors remain read-only. The Check Sepolia connection button checks the server's private RPC configuration without exposing its URL/API key. A connection error does not mean the original on-chain deposit failed; check its explorer receipt before sending more funds.
+
+Additional frontend regression checks: `cd web && npm test`. The Chromium test simulates backend confirmation lag and a missing journal entry recovered on reload. `/api/health` reports version 2.1.0 after this release is deployed.

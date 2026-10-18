@@ -21,6 +21,11 @@ HASH = "0x" + "ab" * 32
 
 
 class FakeChain:
+    event_wallet = None
+
+    def diagnostics(self):
+        return {"ok": True, "message": "Sepolia RPC connected (test)"}
+
     def balance(self, wallet):
         return {
             "principal": "0",
@@ -37,6 +42,7 @@ class FakeChain:
             {
                 "hash": tx_hash,
                 "log_index": 0,
+                "wallet": wallet or self.event_wallet,
                 "kind": "Deposited",
                 "amount": "1000000000000000001",
                 "block": 42,
@@ -386,3 +392,51 @@ def test_reject_untrusted_receipts(scenario):
         eth.get_block = lambda n: {"hash": HexBytes("0x" + "ef" * 32), "timestamp": 0}
     with pytest.raises(HTTPException):
         chain.verify_receipt(HASH, wallet)
+
+
+def test_admin_can_recover_customer_receipt_without_own_wallet(setup):
+    app, client, _ = setup
+    register(client)
+    wallet, _ = link(client)
+    app.state.chain.event_wallet = wallet.address
+    register(client, "admin@example.com", adminCode="admin-secret")
+    assert client.get("/api/me").json()["wallet"] is None
+    result = client.post("/api/transactions", json={"hash": HASH})
+    assert result.status_code == 200, result.text
+    assert result.json()["inserted"] == 1
+    item = client.get("/api/activity").json()["items"][0]
+    assert item["email"] == "member@example.com" and item["wallet"] == wallet.address
+    assert client.post("/api/transactions", json={"hash": HASH}).json()["inserted"] == 0
+    client.post("/api/logout", json={})
+    client.post(
+        "/api/login", json={"email": "member@example.com", "password": PASSWORD}
+    )
+    assert client.get("/api/activity").json()["total"] == 1
+
+
+def test_rpc_diagnostics_are_authenticated_and_sanitized(setup):
+    _, client, _ = setup
+    assert client.get("/api/chain-status").status_code == 401
+    register(client)
+    assert client.get("/api/chain-status").json()["ok"] is True
+    from rpc_errors import rpc_message
+    import requests
+
+    response = requests.Response()
+    response.status_code = 403
+    error = requests.HTTPError(
+        "https://secret-provider/v2/SECRET_KEY", response=response
+    )
+    message = rpc_message(error)
+    assert "SECRET_KEY" not in message and "Sepolia" in message
+    reader = ChainReader(Settings())
+    assert reader.diagnostics()["ok"] is False
+
+
+def test_admin_import_rejects_wallet_not_linked_to_any_account(setup):
+    app, client, _ = setup
+    register(client, "admin@example.com", adminCode="admin-secret")
+    app.state.chain.event_wallet = Account.create().address
+    result = client.post("/api/transactions", json={"hash": HASH})
+    assert result.status_code == 400
+    assert client.get("/api/activity").json()["total"] == 0

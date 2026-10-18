@@ -5,7 +5,7 @@
       "check": "backend-tests",
       "command": "/Users/zeranyao/Projects/saving/backend/.venv/bin/python -m pytest test_api.py -q",
       "cwd": "backend",
-      "startedUtc": "2026-10-18T13:02:39.849946+00:00",
+      "startedUtc": "2026-10-18T14:22:03.385563+00:00",
       "exitCode": 0,
       "log": "backend-tests.log"
     },
@@ -13,7 +13,7 @@
       "check": "contract-tests",
       "command": "npm test",
       "cwd": "contract",
-      "startedUtc": "2026-10-18T13:02:42.434606+00:00",
+      "startedUtc": "2026-10-18T14:22:06.212425+00:00",
       "exitCode": 0,
       "log": "contract-tests.log"
     },
@@ -21,7 +21,7 @@
       "check": "contract-compile",
       "command": "npm run compile",
       "cwd": "contract",
-      "startedUtc": "2026-10-18T13:02:44.615227+00:00",
+      "startedUtc": "2026-10-18T14:22:08.181915+00:00",
       "exitCode": 0,
       "log": "contract-compile.log"
     },
@@ -29,15 +29,23 @@
       "check": "gas-benchmark",
       "command": "npm run benchmark",
       "cwd": "contract",
-      "startedUtc": "2026-10-18T13:02:45.302906+00:00",
+      "startedUtc": "2026-10-18T14:22:08.863383+00:00",
       "exitCode": 0,
       "log": "gas-benchmark.log"
+    },
+    {
+      "check": "web-tests",
+      "command": "npm test",
+      "cwd": "web",
+      "startedUtc": "2026-10-18T14:22:10.285596+00:00",
+      "exitCode": 0,
+      "log": "web-tests.log"
     },
     {
       "check": "web-lint",
       "command": "npm run lint",
       "cwd": "web",
-      "startedUtc": "2026-10-18T13:02:47.428836+00:00",
+      "startedUtc": "2026-10-18T14:22:10.545135+00:00",
       "exitCode": 0,
       "log": "web-lint.log"
     },
@@ -45,7 +53,7 @@
       "check": "web-build",
       "command": "npm run build",
       "cwd": "web",
-      "startedUtc": "2026-10-18T13:02:49.890303+00:00",
+      "startedUtc": "2026-10-18T14:22:12.659432+00:00",
       "exitCode": 0,
       "log": "web-build.log"
     }

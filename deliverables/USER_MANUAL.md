@@ -17,7 +17,7 @@ Select Connect MetaMask. Approve the account connection and Sepolia switch reque
 If you choose the wrong wallet before signing, cancel. After linking, changing the selected MetaMask account will cause transactions to be rejected until you switch back to the linked address. Account recovery or relinking is not currently available.
 
 ## 4. Deposit and view your savings
-Enter a positive ETH amount, such as 0.01, and choose Preview deposit. Review the in-app gas estimate, fee cap, destination and network. The fee cap includes a 20% gas buffer and expires after 60 seconds. Choose Confirm in MetaMask and check the wallet prompt before signing. Leave enough Sepolia ETH in the wallet for gas. The app waits for two confirmations before recording a transaction. The wait depends on the chain and RPC provider; it is not guaranteed to finish within a fixed number of seconds.
+Enter a positive ETH amount, such as 0.01, and choose Preview deposit. Review the in-app gas estimate, fee cap, destination and network. The fee cap includes a 20% buffer plus a 30,000-unit timing allowance and expires after 60 seconds. Choose Confirm in MetaMask and check the wallet prompt before signing. Leave enough Sepolia ETH in the wallet for gas. The app waits for two confirmations before recording a transaction. The wait depends on the chain and RPC provider; it is not guaranteed to finish within a fixed number of seconds.
 
 Total deposited is your remaining principal. Interest earned is accrued, unclaimed simple interest. The APR comes from the deployed contract and cannot be changed in this version. At 5% APR, 1 ETH held for an exact 365-day year earns 0.05 ETH before rounding. Refresh to fetch a newer on-chain balance; the displayed figure is not continuously streamed. Claimed interest does not automatically compound.
 
@@ -58,3 +58,8 @@ Register an Auditor using the separate auditor invitation. Auditors can inspect 
 
 ## 10. Updating from the Node backend
 Use the same SQLite DB_PATH with the Python service. Startup adds columns/indexes and an audit table without deleting existing rows. Original passwords and sessions remain compatible. Back up a real database before upgrading. Audit events begin with the new implementation; they do not invent historical sign-in records.
+
+## 11. Recovering a confirmed transaction missing from history
+A MetaMask confirmation does not by itself create a database history row. Version 2.1 saves submitted hashes in this browser and retries the server receipt import when confirmations lag. Refresh or sign in again with the same linked wallet to retry a saved hash. For older transactions, paste the hash into Import. Feedback appears immediately beside history. Do not deposit again to create a missing log entry.
+
+An Administrator can also import a confirmed receipt for a customer's already-linked wallet; the transaction is credited to that customer using the verified event, not the admin. Auditors cannot import. Use Check Sepolia connection beside history to diagnose the backend RPC and contract configuration. No API key is displayed.

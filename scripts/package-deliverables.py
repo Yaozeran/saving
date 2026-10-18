@@ -7,7 +7,7 @@ from pptx import Presentation
 from xml.etree import ElementTree as ET
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'deliverables'
 skip_dirs={'node_modules','.next','.git','data','artifacts','__pycache__','.venv','.pytest_cache'}
-root_files={'README.md','Dockerfile','render.yaml','start.mjs','.gitignore','.dockerignore'}
+root_files={'README.md','Dockerfile','render.yaml','start.mjs','.gitignore','.dockerignore','.gitattributes'}
 source_roots={'web','backend','contract','docs','scripts'}
 files=[]
 for p in sorted(ROOT.rglob('*')):

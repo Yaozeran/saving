@@ -19,10 +19,11 @@ The Python backend uses FastAPI sync handlers in its worker thread pool, per-ope
 | POST | /api/login, /api/logout | Create/revoke 24-hour opaque session |
 | GET | /api/me | Current account profile |
 | POST | /api/challenge, /api/wallet | Expiring one-use signed wallet proof |
+| GET | /api/chain-status | Authenticated, sanitized RPC/network/contract diagnostics |
 | GET | /api/balance | Single-block principal, interest, reserve, owner and total principal |
 | GET | /api/activity | Role-scoped event filter and pagination (page/pageSize/kind) |
 | GET | /api/transactions | Compatible latest-500 array endpoint |
-| POST | /api/transactions | Verified/idempotent receipt import; auditor forbidden |
+| POST | /api/transactions | Verified/idempotent receipt import; admin can recover linked customers; auditor forbidden |
 | GET | /api/analytics | Four event series over 14 UTC recording dates |
 | GET | /api/transactions/export | Up to 10,000 role-scoped CSV rows; formula-safe |
 | GET | /api/audit | Admin/auditor account audit events, 20 rows/page |

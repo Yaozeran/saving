@@ -2,7 +2,7 @@
 Recorded 18 October 2026 · Zeran Yao (G2509029A)
 
 ## 1. Reproducibility and scope
-Run `python3 scripts/collect-evidence.py` from the project root. Raw stdout/stderr, exit codes and UTC start times are stored in evidence/. Host: macOS-26.3.1-arm64-arm-64bit. The backend uses Python 3.12/FastAPI and pytest; frontend/contract tooling uses Node 24. The Python suite has 16 cases and the EVM suite has three tests; assertions are not counted as independent cases. This is functional evidence, not a security certification.
+Run `python3 scripts/collect-evidence.py` from the project root. Raw stdout/stderr, exit codes and UTC start times are stored in evidence/. Host: macOS-26.3.1-arm64-arm-64bit. The backend uses Python 3.12/FastAPI and pytest; frontend/contract tooling uses Node 24. The Python suite has 19 cases and the EVM suite has three tests; assertions are not counted as independent cases. This is functional evidence, not a security certification.
 
 | Check | Result | Exit code | Raw evidence |
 | --- | --- | --- | --- |
@@ -10,6 +10,7 @@ Run `python3 scripts/collect-evidence.py` from the project root. Raw stdout/stde
 | contract-tests | PASS | 0 | evidence/contract-tests.log |
 | contract-compile | PASS | 0 | evidence/contract-compile.log |
 | gas-benchmark | PASS | 0 | evidence/gas-benchmark.log |
+| web-tests | PASS | 0 | evidence/web-tests.log |
 | web-lint | PASS | 0 | evidence/web-lint.log |
 | web-build | PASS | 0 | evidence/web-build.log |
 

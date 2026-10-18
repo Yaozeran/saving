@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends libstdc++6 && r
 WORKDIR /app/backend
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
-COPY backend/main.py backend/config.py backend/database.py backend/security.py backend/chain.py ./
+COPY backend/main.py backend/config.py backend/database.py backend/security.py backend/chain.py backend/rpc_errors.py ./
 WORKDIR /app/web
 COPY --from=webbuild /app/web/.next/standalone ./
 COPY --from=webbuild /app/web/.next/static ./.next/static

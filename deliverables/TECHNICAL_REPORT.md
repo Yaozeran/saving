@@ -97,7 +97,7 @@ users stores unique emails, salted password hashes, roles and linked wallets. se
 History now distinguishes block time from recording time; old rows with unknown block metadata remain labelled legacy. The activity endpoint paginates and filters events. The UI displays ten rows per page; CSV exports at most 10,000 rows in the caller's account scope. The 14-day chart groups by recording date, explicitly avoiding a false block-date interpretation. Data outside the portal is not indexed automatically, and a late import appears on its recording date.
 
 ### API responsibilities
-Public routes provide health, configuration and authentication. Authenticated routes provide wallet proof, balances, paginated activity, analytics and CSV export. Customers see only their own journal. Administrators see all recorded accounts including emails. Auditors see cross-account wallet evidence and the audit trail but no emails; the API rejects their receipt imports. Auditor identity linking and logout remain permitted. Contract custody permissions remain independent of application roles.
+Public routes provide health, configuration and authentication. Authenticated routes provide wallet proof, balances, paginated activity, analytics and CSV export. Customers see only their own journal. Administrators see all recorded accounts including emails. Auditors see cross-account wallet evidence and the audit trail but no emails; the API rejects their receipt imports. Admins can recover a linked customer’s receipt, with ownership resolved from the verified event. Auditor identity linking and logout remain permitted. Contract custody permissions remain independent of application roles.
 
 A receipt import requires the configured chain, a successful direct transaction to the vault, two confirmations, a matching canonical block hash at import, the vault's event emitter and a linked-wallet event. Amounts come from decoded logs, not the browser. A unique hash/log-index key makes imports idempotent. New records retain block metadata; later reorganisations are not automatically reconciled. Arbitrary routers and multisig call paths are not supported by the direct-recipient rule.
 
@@ -137,7 +137,7 @@ The dashboard groups principal, interest and APR above a 14-day event chart, tra
 ### Exception and usability behaviour
 The interface reports missing MetaMask, wrong linked account, unconfigured contract and API errors. Users can refuse wallet prompts. Invalid amounts and an empty reserve cause rejected transactions or failed estimation. A submitted transaction can remain pending or fail while waiting; users should retain its hash and check the explorer before resubmitting. Import requires a confirmed successful receipt.
 
-The interface uses responsive CSS, labels, focus styles, status messages and a chart data table. Actions first estimate gas and show a fee cap with a 20% gas buffer; an explicit button then opens wallet signing. Quotes expire after 60 seconds and are invalidated by amount, account or chain changes. The signer and network are rechecked after prompts. A local browser test exercises the main flow and 390-pixel layout; real MetaMask, screen-reader and public-host checks remain separate.
+The interface uses responsive CSS, labels, focus styles, status messages and a chart data table. Actions first estimate gas and show a fee cap with a 20% buffer plus a 30,000-unit timing allowance; an explicit button then opens wallet signing. Quotes expire after 60 seconds and are invalidated by amount, account or chain changes. The signer and network are rechecked after prompts. A local browser test exercises the main flow and 390-pixel layout; real MetaMask, screen-reader and public-host checks remain separate.
 <!-- PAGE -->
 # 8. Security analysis and limitations
 ### Controls present in source
@@ -163,7 +163,7 @@ The API rejects a mismatched browser Origin, limits JSON request size and valida
 ### Reproducible method
 scripts/collect-evidence.py runs backend tests, local EVM tests, Solidity compilation, a gas benchmark, frontend lint and the production build. It saves actual output and return codes under deliverables/evidence. The accompanying testing report maps each scenario to its evidence and distinguishes freshly collected results from prior Docker checks. Results are not inferred from the existence of test files.
 
-The Python suite has 16 test cases, including Node-hash compatibility, additive migration, sessions, invitation escalation, replay/expiry, wallet uniqueness, seeded cross-account isolation, auditor read-only access, CSV formula safety, exact wei aggregation, receipt decoding and rejected receipt scenarios. Three local EVM tests cover funded accounting, an empty-reserve principal withdrawal, and top-up/partial-withdrawal accrual. The Chromium/local-EVM script separately exercises the actual Python API, wallet proof, fee preview, confirmed imports, chart/filter/export and auditor workspace; the wallet is simulated.
+The Python suite has 19 test cases, including Node-hash compatibility, additive migration, sessions, invitation escalation, replay/expiry, wallet uniqueness, seeded cross-account isolation, auditor read-only access, CSV formula safety, exact wei aggregation, receipt decoding and rejected receipt scenarios. Three local EVM tests cover funded accounting, an empty-reserve principal withdrawal, and top-up/partial-withdrawal accrual. The Chromium/local-EVM script separately exercises the actual Python API, wallet proof, fee preview, confirmed imports, chart/filter/export and auditor workspace; the wallet is simulated.
 
 ### Worked accounting scenario
 At 5% APR, one ETH held for exactly 365 days earns 0.05 ETH before integer rounding considerations. A reserve of 0.2 ETH can cover this single claim, leaving approximately 0.15 ETH. The local experiment advances EVM time rather than waiting a real year. Additional block seconds may slightly change the receipt value. A full principal withdrawal leaves totalPrincipal equal to zero. These are controlled technical observations, not evidence of an investment return.
@@ -187,7 +187,7 @@ The contract uses constant-time per-account operations, no loop over depositors,
 
 Measured deployment gas fell from 1017375 to 545131 (46.42%). Optimized actual gas was deposit: 94735, fund: 22724, claim: 53951, withdraw: 40698. 
 
-The frontend now estimates gas through the connected wallet provider, fetches fee data, applies a 20% gas-limit buffer and displays a maximum network fee before signature. It checks the wallet balance against deposit value plus that cap. Confirmation preserves the previewed amount, destination and fee bounds, rechecks wallet/network and rejects expired quotes. Claim interest can grow slightly before execution; the quote labels it as all accrued interest. MetaMask still provides final user authorisation.
+The frontend now estimates gas through the connected wallet provider, fetches fee data, applies a 20% gas-limit buffer plus a 30,000-unit timing allowance and displays a maximum network fee before signature. It checks the wallet balance against deposit value plus that cap. Confirmation preserves the previewed amount, destination and fee bounds, rechecks wallet/network and rejects expired quotes. Claim interest can grow slightly before execution; the quote labels it as all accrued interest. MetaMask still provides final user authorisation.
 <!-- PAGE -->
 # 11. Cloud deployment and operations
 ### Implemented deployment artifacts
@@ -200,8 +200,8 @@ Render's documentation states that service filesystems are ephemeral unless data
 | --- | --- |
 | Local Docker build | Python runtime image built successfully |
 | Combined-container page/API/session smoke | Python API, proxy Origin check and session passed |
-| Public Render URL | Not supplied or verified |
-| Sepolia address / deployment hash | Not supplied or verified |
+| Public Render URL | saving-sepolia.onrender.com health/config checked; v2.1 update pending |
+| Sepolia address / deployment hash | Contract address and deposit verified; creation hash pending |
 | GitHub repository URL / commit history | No repository metadata present in workspace |
 | Verified contract source on explorer | Not performed |
 | Public browser demo / deployment screenshots | Not performed |

@@ -8,10 +8,10 @@ Original source: .agent/doc/project.docx. On 18 October 2026 the project owner c
 | MetaMask and wallet signing | EIP-1193 integration, signed wallet proof | Chromium simulated-wallet workflow passes; actual extension pending |
 | Three interacting contracts | One Savings vault | Intentional focused scope; original count differs |
 | Ten transaction types | Deposit, withdraw, claim, fund | Four genuine business types retained; original count differs |
-| Backend REST / persistent database | Python/FastAPI, SQLite, compatible legacy migration | 16 pytest cases; real Node-hash compatibility |
+| Backend REST / persistent database | Python/FastAPI, SQLite, compatible legacy migration | 19 pytest cases; real Node-hash compatibility |
 | Responsive dashboard and history | Chart, filters, pages, CSV and audit trail | Chromium desktop and 390px local-chain checks |
 | Event logs | Confirmed receipt-based journal with block metadata | Manual recovery/import; no automatic full-chain indexer |
-| Gas estimation | Expiring fee-cap preview before wallet signature | Balance/chain/account rechecks; 20% gas buffer |
+| Gas estimation | Expiring fee-cap preview before wallet signature | Balance/chain/account rechecks; 20% buffer plus a 30,000-unit timing allowance |
 | Gas optimisation analysis | Compiler off/on comparison | Measured gas JSON and testing report |
 | Smart contract testing | Three local EVM tests | Accounting, reserve, top-up and partial withdrawal |
 | Public cloud | Python Docker image and Render Blueprint | Local container checked; public URL pending |

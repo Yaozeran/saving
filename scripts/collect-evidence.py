@@ -22,6 +22,7 @@ checks = [
     ("contract-tests", "contract", ["npm", "test"]),
     ("contract-compile", "contract", ["npm", "run", "compile"]),
     ("gas-benchmark", "contract", ["npm", "run", "benchmark"]),
+    ("web-tests", "web", ["npm", "test"]),
     ("web-lint", "web", ["npm", "run", "lint"]),
     ("web-build", "web", ["npm", "run", "build"]),
 ]

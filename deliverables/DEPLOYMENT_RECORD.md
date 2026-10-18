@@ -1,13 +1,13 @@
 # Deployment and Repository Evidence Register
-Status: preparation complete; public publication and live evidence outstanding.
+Status: public app URL and Sepolia contract now observed; authenticated acceptance and v2.1 redeployment still pending.
 
 ## Public identifiers
 | Required item | Recorded value / status |
 | --- | --- |
 | GitHub repository URL | Not available; workspace has no Git metadata |
 | Source commit / release tag | Not available; do not invent history |
-| Render public deployment URL | Not deployed or verified |
-| Sepolia contract address | Not deployed or verified |
+| Render public deployment URL | https://saving-sepolia.onrender.com — public health/config checked, version 2.0.0; v2.1 update pending |
+| Sepolia contract address | 0xC2609E2Ce2E231E3c90DCb6e84C68988f93df3a5 — code/rate/deposit receipt checked |
 | Deployment transaction hash | Not available |
 | Deployer wallet address | Not recorded |
 | Explorer source verification URL | Not available |

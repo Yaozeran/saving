@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from web3 import Web3
 from web3.exceptions import TransactionNotFound
 from web3.logs import DISCARD
+from rpc_errors import rpc_message
 
 CHAIN_ID = 11155111
 EVENT_NAMES = ("Deposited", "Withdrawn", "InterestPaid", "Funded")
@@ -69,6 +70,32 @@ class ChainReader:
         if self.web3.eth.chain_id != CHAIN_ID:
             raise HTTPException(503, "Server RPC must use Sepolia.")
 
+    def diagnostics(self):
+        try:
+            self.ensure()
+            block = self.web3.eth.block_number
+            if not self.web3.eth.get_code(self.vault.address, block_identifier=block):
+                return {
+                    "ok": False,
+                    "message": "Connected to Sepolia, but no contract exists at CONTRACT_ADDRESS. Check the address in Render.",
+                }
+            rate = self.vault.functions.rateBps().call(block_identifier=block)
+            return {
+                "ok": True,
+                "chainId": CHAIN_ID,
+                "contract": self.vault.address,
+                "latestBlock": block,
+                "message": f"Sepolia RPC connected · block {block} · Savings contract responds ({rate / 100:g}% APR).",
+            }
+        except HTTPException as error:
+            return {"ok": False, "message": error.detail}
+        except Exception as error:
+            return {
+                "ok": False,
+                "message": rpc_message(error)
+                or "RPC check failed. Check the configured Sepolia endpoint and contract address.",
+            }
+
     def balance(self, wallet):
         self.ensure()
         f = self.vault.functions
@@ -86,7 +113,7 @@ class ChainReader:
             "block": block,
         }
 
-    def verify_receipt(self, tx_hash, wallet):
+    def verify_receipt(self, tx_hash, wallet=None):
         self.ensure()
         try:
             receipt = self.web3.eth.get_transaction_receipt(tx_hash)
@@ -111,14 +138,14 @@ class ChainReader:
             for event in getattr(self.vault.events, name)().process_receipt(
                 receipt, errors=DISCARD
             ):
-                if (
-                    event["address"].lower() == self.vault.address.lower()
-                    and event["args"]["user"].lower() == wallet.lower()
+                if event["address"].lower() == self.vault.address.lower() and (
+                    wallet is None or event["args"]["user"].lower() == wallet.lower()
                 ):
                     events.append(
                         {
                             "hash": Web3.to_hex(receipt["transactionHash"]),
                             "log_index": event["logIndex"],
+                            "wallet": event["args"]["user"],
                             "kind": name,
                             "amount": str(event["args"]["amount"]),
                             "block": receipt["blockNumber"],

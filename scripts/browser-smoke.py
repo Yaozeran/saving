@@ -5,6 +5,7 @@ Run with the Python interpreter that has Playwright installed.
 """
 
 from pathlib import Path
+import sqlite3
 import json, os, socket, subprocess, tempfile, time, urllib.request
 from playwright.sync_api import sync_playwright, expect
 
@@ -172,10 +173,18 @@ console.log(JSON.stringify({contract:await c.getAddress(),customer:await custome
                 "customer registration through Next proxy with browser Origin"
             )
             page.get_by_role("button", name="Connect MetaMask").click()
-            expect(page.get_by_role("status")).to_contain_text(
+            expect(page.locator(".notice")).to_contain_text(
                 "Wallet verified", timeout=20000
             )
             checks.append("simulated wallet challenge signature verified by Python")
+            conflicts = {"count": 0}
+            def delay_import(route):
+                if route.request.method == "POST" and conflicts["count"] < 2:
+                    conflicts["count"] += 1
+                    route.fulfill(status=409, content_type="application/json", body=json.dumps({"error":"Wait for two confirmations and refresh."}))
+                else:
+                    route.continue_()
+            page.route("**/api/transactions",delay_import)
             page.get_by_label("ETH amount").fill("0.01")
             for button, action in [
                 ("Preview deposit", "deposit"),
@@ -192,13 +201,25 @@ console.log(JSON.stringify({contract:await c.getAddress(),customer:await custome
                     page.get_by_text("Maximum network fee", exact=True)
                 ).to_be_visible()
                 page.get_by_role("button", name="Confirm in MetaMask").click()
-                expect(page.get_by_role("status")).to_contain_text(
+                expect(page.locator(".notice")).to_contain_text(
                     "Transaction confirmed and recorded", timeout=45000
                 )
                 checks.append(
                     f"{action}: fee preview, local EVM execution, two confirmations and verified journal import"
                 )
             expect(page.locator(".pagination")).to_contain_text("3 recorded events")
+            assert conflicts["count"] == 2
+            checks.append("receipt import survives two backend confirmation conflicts")
+            with sqlite3.connect(Path(tmp)/"smoke.sqlite") as db:
+                lost_hash=db.execute("SELECT hash FROM transactions WHERE kind='Deposited'").fetchone()[0]
+                db.execute("DELETE FROM transactions WHERE hash=?",(lost_hash,))
+            storage_key=f"saving:sepolia:receipts:{config['contract'].lower()}:{config['customer'].lower()}"
+            page.evaluate("({key,hash})=>localStorage.setItem(key,JSON.stringify([hash]))",{"key":storage_key,"hash":lost_hash})
+            page.reload()
+            expect(page.locator(".history-feedback")).to_contain_text("Recovered",timeout=15000)
+            expect(page.locator(".pagination")).to_contain_text("3 recorded events")
+            checks.append("reload automatically recovers a missing deposit journal entry from the saved hash")
+
             page.get_by_role("button", name="Interest paid", exact=True).click()
             page.get_by_text("View accessible data table", exact=True).click()
             expect(page.locator(".chart-details tbody tr")).to_have_count(14)

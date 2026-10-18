@@ -1,5 +1,12 @@
 "use client";
 import Link from "next/link";
+import {
+  bufferedGas,
+  pendingReceipts,
+  saveReceipt,
+  removeReceipt,
+  importWithRetry,
+} from "@/lib/receipt-recovery";
 import { useCallback, useEffect, useState } from "react";
 import {
   BrowserProvider,
@@ -61,12 +68,13 @@ async function api(path: string, body?: object) {
     headers: body ? { "Content-Type": "application/json" } : {},
     body: body ? JSON.stringify(body) : undefined,
   });
-  const data = await r
-    .json()
-    .catch(() => ({
-      error: "The service did not respond. Try again shortly.",
-    }));
-  if (!r.ok) throw Error(data.error);
+  const data = await r.json().catch(() => ({
+    error: "The service did not respond. Try again shortly.",
+  }));
+  if (!r.ok)
+    throw Object.assign(Error(data.error || "Request failed."), {
+      status: r.status,
+    });
   return data;
 }
 const eth = (v: string = "0") =>
@@ -93,6 +101,8 @@ export default function Home() {
   const [page, setPage] = useState(1),
     [total, setTotal] = useState(0),
     [kind, setKind] = useState("");
+  const [historyMessage, setHistoryMessage] = useState("");
+  const [connectionMessage, setConnectionMessage] = useState("");
   const [quote, setQuote] = useState<Quote | null>(null);
   const privileged = user?.role === "admin" || user?.role === "auditor";
   const readOnly = user?.role === "auditor";
@@ -118,10 +128,29 @@ export default function Home() {
       setAnalytics(null);
       setAudit([]);
       setQuote(null);
+      setHistoryMessage("");
+      setConnectionMessage("");
       setReady(true);
       return;
     }
     setUser(me);
+    if (me.wallet && config.contract && me.role !== "auditor") {
+      const saved = pendingReceipts(localStorage, config.contract, me.wallet);
+      for (const hash of saved.slice(0, 3)) {
+        try {
+          await api("transactions", { hash });
+          removeReceipt(localStorage, config.contract, me.wallet, hash);
+          setHistoryMessage(
+            "Recovered a confirmed transaction from your previous session.",
+          );
+        } catch (e) {
+          setPending(hash);
+          setHistoryMessage(
+            `Transaction ${hash} is awaiting recording: ${(e as Error).message} Use Import to retry; do not send another deposit.`,
+          );
+        }
+      }
+    }
     await loadHistory();
     setAnalytics(await api("analytics"));
     if (me.role === "admin" || me.role === "auditor")
@@ -236,7 +265,7 @@ export default function Home() {
     const maxFee = fees.maxFeePerGas ?? fees.gasPrice;
     if (maxFee === null)
       throw Error("Fee data is unavailable. Try estimating again.");
-    const gasLimit = (gas * 120n + 99n) / 100n;
+    const gasLimit = bufferedGas(gas);
     const fee = gasLimit * maxFee;
     const spend =
       (action === "deposit" || action === "fund" ? value : 0n) + fee;
@@ -308,13 +337,57 @@ export default function Home() {
             ? await vault.fund({ ...overrides, value: BigInt(q.value) })
             : await vault.deposit({ ...overrides, value: BigInt(q.value) });
     setPending(tx.hash);
-    setNotice("Transaction submitted. Waiting for two confirmations…");
-    await tx.wait(2);
-    await api("transactions", { hash: tx.hash });
-    setPending("");
-    await refresh();
-    setNotice("Transaction confirmed and recorded.");
+    saveReceipt(localStorage, q.contract, q.wallet, tx.hash);
+    setNotice(
+      "Transaction submitted. Waiting for the server RPC to confirm and record it…",
+    );
+    setHistoryMessage(
+      `Submitted ${tx.hash}. Waiting for confirmation; do not submit another deposit.`,
+    );
+    try {
+      // A wallet provider may be ahead of the backend: retry confirmation conflicts.
+      await importWithRetry(tx.hash, (hash) => api("transactions", { hash }));
+      removeReceipt(localStorage, q.contract, q.wallet, tx.hash);
+      setPending("");
+      await refresh();
+      setNotice("Transaction confirmed and recorded.");
+      setHistoryMessage(
+        "Transaction confirmed and recorded. It is visible to you and the administrator.",
+      );
+    } catch (e) {
+      const message = `Transaction submitted: ${tx.hash}. History is not recorded yet: ${(e as Error).message} Use Import or Refresh to recover it; do not deposit again.`;
+      setNotice(message);
+      setHistoryMessage(message);
+      await loadHistory();
+    }
   }
+  async function recoverReceipt() {
+    const hash = pending.trim();
+    setHistoryMessage("Checking the transaction receipt with the server RPC…");
+    if (user?.wallet && address)
+      saveReceipt(localStorage, address, user.wallet, hash);
+    try {
+      const result = (await importWithRetry(
+        hash,
+        (h) => api("transactions", { hash: h }),
+        4,
+        2000,
+      )) as { inserted: number };
+      if (user?.wallet && address)
+        removeReceipt(localStorage, address, user.wallet, hash);
+      setPending("");
+      await refresh();
+      const message = result.inserted
+        ? "Transaction imported. It is now visible to you and the administrator."
+        : "Transaction was already recorded. Showing the refreshed history.";
+      setNotice(message);
+      setHistoryMessage(message);
+    } catch (e) {
+      setHistoryMessage((e as Error).message);
+      throw e;
+    }
+  }
+
   return (
     <div className="shell">
       <aside>
@@ -669,9 +742,9 @@ export default function Home() {
                   </div>
                 </dl>
                 <p>
-                  Fee cap includes a 20% gas buffer. Actual cost may be lower.
-                  Preview expires after 60 seconds; MetaMask asks for your final
-                  signature.
+                  Fee cap includes a 20% buffer plus a 30,000-unit timing
+                  allowance. Unused gas is not charged. Preview expires after 60
+                  seconds; MetaMask asks for your final signature.
                 </p>
                 <button disabled={busy} onClick={() => run(confirmTransaction)}>
                   Confirm in MetaMask ↗
@@ -696,6 +769,27 @@ export default function Home() {
                   Refresh ↻
                 </button>
               </div>
+              <div className="connection-tools">
+                <button
+                  type="button"
+                  className="text-button"
+                  disabled={busy}
+                  onClick={() =>
+                    run(async () => {
+                      const status = await api("chain-status");
+                      setConnectionMessage(status.message);
+                    })
+                  }
+                >
+                  Check Sepolia connection ↗
+                </button>
+                {connectionMessage && <p role="status">{connectionMessage}</p>}
+              </div>
+              {historyMessage && (
+                <div className="history-feedback" role="status">
+                  {historyMessage}
+                </div>
+              )}
               <div className="history-tools">
                 <label>
                   Event type
@@ -726,10 +820,7 @@ export default function Home() {
                   onSubmit={(e) => {
                     e.preventDefault();
                     void run(async () => {
-                      await api("transactions", { hash: pending });
-                      setPending("");
-                      await refresh();
-                      setNotice("Transaction imported.");
+                      await recoverReceipt();
                     });
                   }}
                 >
